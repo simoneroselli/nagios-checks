@@ -180,6 +180,7 @@ class CheckTartarus(object):
 
             return tartarus_backup
 
+
 # Main: exit status for Icinga
 if __name__=='__main__':
     check = CheckTartarus.backupParse(backup, ftp_file_list)
