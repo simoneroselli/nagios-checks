@@ -12,7 +12,7 @@
 # remote backups. In order to connect to the remote SFTP server, an
 # external file (/etc/tartarus/generic.inc) is read.
 #
-# The plugin perform following checks:
+# The plugin perform follow checks:
 # * Remote host is up
 # * Backup files are not older than 't' (t = time in seconds)
 # * Print the latest/oldest backup files
