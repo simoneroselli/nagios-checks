@@ -4,18 +4,20 @@
 #
 # Author ZMo <simoneroselli78@gmail.com>
 #
-# Nagios plugin for Tartarus backup.
-# Retrieve the configuration automagically from the Tartarus default
-# conf file. If the backup is remotely stored on the SFTP server,
-# check about its age and notify
+# Nagios plugin for Tartarus backup -
+# Tartarus is a software for store remote backup
+# http://wertarbyte.de/tartarus/doc/tartarus.txt
 #
-# Max allowed backup age in seconds.(86400 = 1 day, 604800 = 1 week);
-# basically this time is calculated along MAX_AGE_IN_DAYS in the
-# '/etc/tartarus/<resource>.conf' value
+# The "check_tartarus_backup" plugin, aim to verify the state of those
+# remote backups. In order to connect to the remote SFTP server, an
+# external file (/etc/tartarus/generic.inc) is read.
 #
-# Usage: make a symlink to the check_tartarus_backup in
-# Nagios's style using the backup name.  
-# Example: ln -s check_tartarus_backup check_tartarus_mysql
+# The plugin perform following checks:
+# * Remote host is up
+# * Backup files are not older than 't' (t = time in seconds)
+# * Print the latest/oldest backup files
+# * Amount of remote space available (TODO)
+# * Percent of increment/decrement since the last backup (TODO)
 
 import sys, time, datetime, os, re
 import paramiko as p
