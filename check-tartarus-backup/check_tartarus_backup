@@ -22,21 +22,21 @@
 import sys, time, datetime, os, re
 import paramiko as p
 
-backup_max_age = 86400
-today_secs = int(time.time())
+BACKUP_MAX_AGE = 86400
+TODAY_SECS = int(time.time())
 
 # Messages output
-print_warn = "TARTARUS BACKUP WARNING: "
-no_files = 'no_files'
-zero_bytes = 'zero_bytes'
+PRINT_WARN = "TARTARUS BACKUP WARNING: "
+NO_FILES = 'no_files'
+ZERO_BYTES = 'zero_bytes'
 
 # Retrieve backup name instance from the program-name
-backup = sys.argv[0].strip('./')
-backup = '_'.join(backup.split('_')[2:])
-backup = 'tartarus-' + backup
+BACKUP = sys.argv[0].strip('./')
+BACKUP = '_'.join(BACKUP.split('_')[2:])
+BACKUP = 'tartarus-' + BACKUP
 
 # Backup configuration file
-backup_cfg_file = '/etc/tartarus/generic.inc'
+BACKUP_CFG_FILE = '/etc/tartarus/generic.inc'
 
 # Warning exit
 def exitWarn():
@@ -74,16 +74,16 @@ def fromConfFile(conf_file, string):
 
 
 # Check whether the configuration file exists
-if not os.path.exists(backup_cfg_file):
-    print '%s Conf file "%s" not found!' % (print_warn, backup_cfg_file)
+if not os.path.exists(BACKUP_CFG_FILE):
+    print '%s Conf file "%s" not found!' % (PRINT_WARN, BACKUP_CFG_FILE)
     sys.exit(1)
 else:
     # Set connection parameters using the 'fromConfFile' function.
     # It's a little verbose and it's not elegant, but it's better than
     # use 'execfile'
-    STORAGE_FTP_SERVER = fromConfFile(backup_cfg_file, 'STORAGE_FTP_SERVER')
-    STORAGE_FTP_USER = fromConfFile(backup_cfg_file, 'STORAGE_FTP_USER')
-    STORAGE_FTP_PASSWORD = fromConfFile(backup_cfg_file, 'STORAGE_FTP_PASSWORD')
+    STORAGE_FTP_SERVER = fromConfFile(BACKUP_CFG_FILE, 'STORAGE_FTP_SERVER')
+    STORAGE_FTP_USER = fromConfFile(BACKUP_CFG_FILE, 'STORAGE_FTP_USER')
+    STORAGE_FTP_PASSWORD = fromConfFile(BACKUP_CFG_FILE, 'STORAGE_FTP_PASSWORD')
 
     # SFTP connection setup
     if hostIsUp(STORAGE_FTP_SERVER) != True:
@@ -96,7 +96,7 @@ else:
             sftp = p.SFTPClient.from_transport(transport)
             ftp_file_list = sftp.listdir(path='.')
         except p.AuthenticationException:
-            print "%s Wrong credentials for SFTP connection" % (print_warn)
+            print "%s Wrong credentials for SFTP connection" % (PRINT_WARN)
             sys.exit(1)
 
 
@@ -118,7 +118,8 @@ class CheckTartarus(object):
     def __str__(self):
         return "%s, %s, %s" % (self.backup_name, self.backup_latest, self.backup_oldest)
 
-    def fileIsOld(self, max_old, today, file_age):
+    @staticmethod
+    def fileIsOld(max_old, today, file_age):
         """
         fileIsOld -
         Given a age treshold, compare the amount of seconds of the
@@ -144,23 +145,22 @@ class CheckTartarus(object):
         tartarus_backup = []
         backup_files = []
 
-        ct = CheckTartarus()
         
         for f in backup_file_list:
-            if not f.startswith(backup):
+            if not f.startswith(BACKUP):
                 continue
             else:
                 backup_age = sftp.stat(f).st_mtime
                 backup_files.append(backup_age)
                 
         if not backup_files:
-            return no_files
+            return NO_FILES
         else:
             latest = max(backup_files)
             oldest = min(backup_files)
             
             # Check if the backup is older than 24h
-            backup_outdated = ct.fileIsOld(backup_max_age, today_secs, latest)
+            backup_outdated = CheckTartarus.fileIsOld(BACKUP_MAX_AGE, TODAY_SECS, latest)
             if backup_outdated != False:
                 days_old = (backup_outdated / 86400)
                 return days_old
@@ -175,8 +175,7 @@ class CheckTartarus(object):
                         'backup_oldest': oldest
                         }
 
-                for k, v in backup_attr.iteritems():
-                    setattr(ct, k, v)
+                ct = CheckTartarus(**backup_attr)
 
                 tartarus_backup.append(ct)
 
@@ -185,12 +184,12 @@ class CheckTartarus(object):
 
 # Main: exit status for Icinga
 if __name__=='__main__':
-    check = CheckTartarus.backupParse(backup, ftp_file_list)
+    check = CheckTartarus.backupParse(BACKUP, ftp_file_list)
     if check == 'no_files':
-        print "WARNING: No backup '%s' found on remote server!" % (backup)
+        print "WARNING: No backup '%s' found on remote server!" % (BACKUP)
         exitWarn()
     elif isinstance(check, int) == True:
-        print "WARNING: Backup '%s' is %s days old!" % (backup, check)
+        print "WARNING: Backup '%s' is %s days old!" % (BACKUP, check)
         exitWarn()
     else:    
         for i in check:
